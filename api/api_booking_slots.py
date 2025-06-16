@@ -1,12 +1,13 @@
 import psycopg2
 from backend.helper import execute_query_and_map_results
 
-def filter_venue_details(venueid):
-    booking_result = get_venue_details_with_filters(venueid)
+def filter_venue_details(venueid,date):
+    booking_result = get_venue_details_with_filters(venueid,date)
     return {"Venue": booking_result}
 
-def get_venue_details_with_filters(venueid):
+def get_venue_details_with_filters(venueid,date):
     print('Venue to search:', venueid)
+    print('Venue date to search:', date)
     query = """
         SELECT
             av.id AS venue_id,
@@ -31,7 +32,7 @@ def get_venue_details_with_filters(venueid):
             venue_slots vs
         JOIN api_venue av ON
             vs.venue_name = av."name"
-        WHERE av.id = %s;
+        WHERE av.id = %s and vs.schedule_date = %s;
     """
-    result = list(execute_query_and_map_results(query, (venueid,)))
+    result = list(execute_query_and_map_results(query, (venueid,date)))
     return result

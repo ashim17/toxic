@@ -81,8 +81,18 @@ const BookingConfirmation = () => {
           alert(
             `Booking confirmed! Venue: ${data.venue}, Time: ${data.startTime} - ${data.endTime}`
           );
+
+          // Format the booking details for OfflinePayment
+          const bookingData = {
+            venueName: venueName,
+            price: price,
+            location: venueLocation,
+            bookingDate: date,
+            venueImage: venueImage
+          };
+
           // Pass bookingDetails in state to OfflinePayment page
-          navigate("/offline-payment", { state: { bookingDetails } });
+          navigate("/offline-payment", { state: { bookingDetails: bookingData } });
         } else {
           alert(`API error: ${data.message || "Unknown error"}`);
         }

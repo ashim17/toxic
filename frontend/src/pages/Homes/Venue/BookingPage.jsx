@@ -10,21 +10,29 @@ const BookingPage = () => {
   const [venueDetails, setVenueDetails] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
+    if (!selectedDate) return;
+
     const fetchVenueDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/filter/${id}/`);
+        const formattedDate = selectedDate.toISOString().split("T")[0];
+        const response = await fetch(
+          `http://localhost:8000/api/filter/${id}/${formattedDate}/`
+        );
+
         if (!response.ok) throw new Error("Failed to fetch venue details");
         const data = await response.json();
         setVenueDetails(data);
       } catch (error) {
         console.error("Error fetching venue details:", error);
+        setVenueDetails(null);
       }
     };
 
     fetchVenueDetails();
-  }, [id]);
+  }, [id, selectedDate]);
 
   const handleSlotSelect = (slot) => {
     if (slot.available) {
@@ -35,8 +43,6 @@ const BookingPage = () => {
   const handleBooking = () => {
     if (selectedSlot) {
       setIsBooking(true);
-      // In a real app, you would send booking data to your backend here
-      // Then navigate to confirmation page with the booking details
       navigate("/booking-confirmation", {
         state: {
           venueName,
@@ -50,7 +56,20 @@ const BookingPage = () => {
     }
   };
 
-  if (!venueDetails) {
+  const handleDateChange = (e) => {
+    setSelectedSlot(null);
+    setSelectedDate(new Date(e.target.value));
+    setVenueDetails(null);
+  };
+
+  // Helper: check if there are slots available in venueDetails
+  const hasSlots = () => {
+    if (!venueDetails || !venueDetails.Venue) return false;
+    return venueDetails.Venue.length > 0;
+  };
+
+  if (!venueDetails && selectedDate) {
+    // Loading spinner
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -61,11 +80,6 @@ const BookingPage = () => {
     );
   }
 
-  // Get the first item to display general venue info
-  const firstVenue = venueDetails.Venue[0];
-  const facilities = JSON.parse(firstVenue.facilities || "[]");
-  const sports = JSON.parse(firstVenue.sport_categories || "[]");
-
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -73,86 +87,114 @@ const BookingPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Book {venueName}
           </h1>
-          <p className="text-lg text-gray-600">{firstVenue.description}</p>
+          {venueDetails ? (
+            <p className="text-lg text-gray-600">
+              {venueDetails.Venue[0]?.description ||
+                "No description available."}
+            </p>
+          ) : (
+            <p className="text-lg text-gray-600">
+              Please select a date to load venue details and slots
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Venue Details Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <img
-                src={firstVenue.venue_image}
-                alt={venueName}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                  Venue Information
-                </h2>
+            {venueDetails && hasSlots() ? (
+              (() => {
+                const firstVenue = venueDetails.Venue[0];
+                const facilities = JSON.parse(firstVenue.facilities || "[]");
+                const sports = JSON.parse(firstVenue.sport_categories || "[]");
+                return (
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img
+                      src={firstVenue.venue_image}
+                      alt={venueName}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-6">
+                      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                        Venue Information
+                      </h2>
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Location
-                    </h3>
-                    <p className="text-gray-800">{firstVenue.location}</p>
-                  </div>
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Location
+                          </h3>
+                          <p className="text-gray-800">{firstVenue.location}</p>
+                        </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Capacity
-                    </h3>
-                    <p className="text-gray-800">
-                      {firstVenue.capacity} people
-                    </p>
-                  </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Capacity
+                          </h3>
+                          <p className="text-gray-800">
+                            {firstVenue.capacity} people
+                          </p>
+                        </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Type</h3>
-                    <p className="text-gray-800">{firstVenue.type}</p>
-                  </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Type
+                          </h3>
+                          <p className="text-gray-800">{firstVenue.type}</p>
+                        </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Price</h3>
-                    <p className="text-gray-800">
-                      ₹{firstVenue.price} per hour
-                    </p>
-                  </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Price
+                          </h3>
+                          <p className="text-gray-800">
+                            ₹{firstVenue.price} per hour
+                          </p>
+                        </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Facilities
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {facilities.map((facility, index) => (
-                        <span
-                          key={index}
-                          className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                        >
-                          {facility}
-                        </span>
-                      ))}
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Facilities
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {facilities.map((facility, index) => (
+                              <span
+                                key={index}
+                                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                              >
+                                {facility}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Sports
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {sports.map((sport, index) => (
+                              <span
+                                key={index}
+                                className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
+                              >
+                                {sport}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Sports
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {sports.map((sport, index) => (
-                        <span
-                          key={index}
-                          className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                        >
-                          {sport}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                );
+              })()
+            ) : (
+              <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+                {selectedDate
+                  ? "Venue slots have not been published yet."
+                  : "Select a date above to see venue details"}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Booking Section */}
@@ -162,44 +204,76 @@ const BookingPage = () => {
                 <h2 className="text-xl font-semibold text-gray-800">
                   Available Time Slots
                 </h2>
-                <p className="text-gray-600 mt-1">Select a time slot to book</p>
-              </div>
+                <p className="text-gray-600 mt-1">
+                  Select a date to view available slots
+                </p>
 
-              <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {venueDetails.Venue.map((slot, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSlotSelect(slot)}
-                      className={`p-4 rounded-lg border ${
-                        slot.available
-                          ? selectedSlot?.start_time === slot.start_time
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-green-300 hover:border-green-500 bg-green-50 hover:bg-green-100"
-                          : "border-red-200 bg-red-50 cursor-not-allowed"
-                      } transition-colors duration-200`}
-                      disabled={!slot.available}
-                    >
-                      <div className="text-center">
-                        <p className="font-medium text-gray-800">
-                          {slot.start_time} - {slot.end_time}
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            slot.available ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {slot.available ? "Available" : "Unavailable"}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {slot.schedule_date}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                {/* Date Picker */}
+                <div className="mt-4">
+                  <label
+                    htmlFor="date"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Select Date
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    value={
+                      selectedDate
+                        ? selectedDate.toISOString().split("T")[0]
+                        : ""
+                    }
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={handleDateChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
                 </div>
               </div>
 
+              {/* Show slots only if a date is selected and slots exist */}
+              {selectedDate && venueDetails && hasSlots() ? (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {venueDetails.Venue.map((slot, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSlotSelect(slot)}
+                        className={`p-4 rounded-lg border ${
+                          slot.available
+                            ? selectedSlot?.start_time === slot.start_time
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-green-300 hover:border-green-500 bg-green-50 hover:bg-green-100"
+                            : "border-red-200 bg-red-50 cursor-not-allowed"
+                        } transition-colors duration-200`}
+                        disabled={!slot.available}
+                      >
+                        <div className="text-center">
+                          <p className="font-medium text-gray-800">
+                            {slot.start_time} - {slot.end_time}
+                          </p>
+                          <p
+                            className={`text-sm ${
+                              slot.available ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {slot.available ? "Available" : "Unavailable"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {slot.schedule_date}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : selectedDate && venueDetails && !hasSlots() ? (
+                <div className="p-6 text-center text-gray-500">
+                  Venue slots have not been published yet.
+                </div>
+              ) : null}
+
+              {/* Booking Button */}
               {selectedSlot && (
                 <div className="p-6 border-t border-gray-200 bg-blue-50">
                   <div className="flex flex-col sm:flex-row justify-between items-center">
@@ -212,7 +286,7 @@ const BookingPage = () => {
                         {selectedSlot.schedule_date}
                       </p>
                       <p className="text-gray-800 font-medium mt-1">
-                        Total: ₹{firstVenue.price}
+                        Total: ₹{venueDetails.Venue[0].price}
                       </p>
                     </div>
                     <button

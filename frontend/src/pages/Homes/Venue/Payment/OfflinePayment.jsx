@@ -23,6 +23,7 @@ const OfflinePayment = () => {
       Venue: ${bookingDetails?.venueName}
       Amount to Pay: ₹${bookingDetails?.price}
       Location: ${bookingDetails?.location}
+      Booking Date: ${bookingDetails?.bookingDate}
       Contact: +91 9876543210
       Email: info@venue.com
       Booked by: ${user.name} (${user.email})
@@ -35,14 +36,41 @@ const OfflinePayment = () => {
     link.click();
   };
 
-  const handleBack = () => {
-    console.log("🔁 Booking Details:");
-    console.table({
-      ...bookingDetails,
-      bookedBy: user.name,
-      email: user.email,
-    });
-    navigate("/");
+  const handleBack = async () => {
+    console.log("bookingDetails:", bookingDetails);
+    console.log("user:", user);
+
+    const payload = {
+      venueName: bookingDetails?.venueName,
+      price: bookingDetails?.price,
+      location: bookingDetails?.location,
+      bookingDate: bookingDetails?.bookingDate,
+      bookedBy: user?.name,
+      email: user?.email,
+    };
+
+    console.log("Booking data:", payload);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/booking/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save booking history");
+      }
+
+      const data = await response.json();
+      console.log("Booking history saved:", data);
+      navigate("/");
+    } catch (error) {
+      console.error("Error saving booking history:", error);
+      alert("Failed to save booking history. Please try again.");
+    }
   };
 
   if (!bookingDetails) return null;
@@ -67,6 +95,10 @@ const OfflinePayment = () => {
             <p className="text-lg text-gray-700">
               <span className="font-medium">Amount:</span> ₹
               {bookingDetails.price}
+            </p>
+            <p className="text-lg text-gray-700">
+              <span className="font-medium">Booking Date:</span>{" "}
+              {bookingDetails.bookingDate}
             </p>
           </div>
 

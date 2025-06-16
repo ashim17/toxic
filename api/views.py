@@ -7,6 +7,9 @@ from .api_slots_details import *
 from .api_sports_venue_details import *
 from .api_booking_slots import *
 from .booking_schedule import *
+from .booking_history_routes import booking_history_service
+from rest_framework import status
+from .booking_history import api_booking_data
 
 @api_view(['GET'])
 def show_sports_category(request):
@@ -30,8 +33,8 @@ def check_booking_slots(request, venue, start, end):
 
 
 @api_view(['GET'])
-def fetch_filtered_venue_details(request,venueid):
-    return Response(filter_venue_details(venueid))
+def fetch_filtered_venue_details(request,venueid,date):
+    return Response(filter_venue_details(venueid,date))
     
 
 
@@ -44,3 +47,19 @@ def api_venues_data(request):
 def api_slots_data(request):
     return show_slots_list(request.data)
 
+@api_view(['POST'])
+def booking_history_handler(request):
+    data = request.data
+    result=  booking_history_service(data)
+    return Response(result)
+
+@api_view(['POST'])
+def api_booking_history(request):
+    try:
+        data = request.data
+        print("Received POST data:", data)
+        result = api_booking_data(data)
+        return Response({"message": "Booking received", "result": result}, status=status.HTTP_200_OK)
+    except Exception as e:
+        print("Error:", e)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
