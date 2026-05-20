@@ -43,7 +43,7 @@ const RelatedDoctors = () => {
     <div className="flex flex-col items-center gap-4 my-16 text-gray-900 px-4">
       <h1 className="text-3xl font-medium">Sports Venues</h1>
       <p className="w-full md:w-2/3 text-center text-sm">
-        Browse through our available sports venues.
+         through our available sports venues.
       </p>
 
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
