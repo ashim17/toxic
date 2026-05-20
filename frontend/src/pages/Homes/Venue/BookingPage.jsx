@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate, NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const BookingPage = () => {
   const { id } = useParams();
@@ -7,59 +8,136 @@ const BookingPage = () => {
   const navigate = useNavigate();
   const venueName = location.state?.venueName || "Unknown Venue";
 
+  const { access_token } = useSelector((state) => state.auth);
+
   const [venueDetails, setVenueDetails] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoadingVenueDetails, setIsLoadingVenueDetails] = useState(false);
+  const [venueDetailsError, setVenueDetailsError] = useState(null);
 
   useEffect(() => {
-    if (!selectedDate) return;
+    if (!selectedDate) {
+      setIsLoadingVenueDetails(false);
+      setVenueDetailsError(null);
+      return;
+    }
+
+    // Require login to fetch slot details
+    if (!access_token) {
+      setVenueDetails(null);
+      setIsLoadingVenueDetails(false);
+      setVenueDetailsError(null);
+      return;
+    }
 
     const fetchVenueDetails = async () => {
+      setIsLoadingVenueDetails(true);
+      setVenueDetailsError(null);
+
       try {
         const formattedDate = selectedDate.toISOString().split("T")[0];
         const response = await fetch(
-          `http://localhost:8000/api/filter/${id}/${formattedDate}/`
+          `http://localhost:8000/api/filter/${id}/${formattedDate}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch venue details");
+        if (!response.ok) {
+          let message = `Failed to fetch venue details (${response.status})`;
+          try {
+            const errorData = await response.json();
+            message = errorData.detail || errorData.error || message;
+          } catch {
+            /* ignore */
+          }
+          throw new Error(message);
+        }
+
         const data = await response.json();
         setVenueDetails(data);
       } catch (error) {
         console.error("Error fetching venue details:", error);
-        setVenueDetails(null);
+        setVenueDetails({ Venue: [] });
+        setVenueDetailsError(error.message || "Unable to load venue details.");
+      } finally {
+        setIsLoadingVenueDetails(false);
       }
     };
 
     fetchVenueDetails();
-  }, [id, selectedDate]);
+  }, [id, selectedDate, access_token]);
 
   const handleSlotSelect = (slot) => {
     if (slot.available) {
       setSelectedSlot(slot);
     }
   };
-
   const handleBooking = () => {
-    if (selectedSlot) {
-      setIsBooking(true);
-      navigate("/booking-confirmation", {
-        state: {
-          venueName,
-          venueImage: venueDetails.Venue[0].venue_image,
-          date: selectedSlot.schedule_date,
-          time: `${selectedSlot.start_time} - ${selectedSlot.end_time}`,
-          price: venueDetails.Venue[0].price,
-          location: venueDetails.Venue[0].location,
-        },
-      });
+    if (!selectedSlot) return;
+    if (!access_token) {
+      navigate('/login');
+      return;
     }
+
+    (async () => {
+      try {
+        setIsBooking(true);
+
+        const payload = {
+          venue_id: venueDetails.Venue[0].venue_id || parseInt(id),
+          time_slot_id: selectedSlot.slot_id,
+        };
+
+        const res = await fetch('http://127.0.0.1:8000/api/bookings/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({
+            detail: 'Booking failed',
+          }));
+
+          throw new Error(err.error || err.detail || 'Booking failed');
+        }
+
+        const booking = await res.json();
+
+        navigate('/booking-confirmation', {
+          state: {
+            venueName,
+            venueImage: venueDetails.Venue[0].venue_image,
+            date: selectedSlot.schedule_date,
+            time: `${selectedSlot.start_time} - ${selectedSlot.end_time}`,
+            price: venueDetails.Venue[0].price,
+            location: venueDetails.Venue[0].location,
+            bookingId: booking.id,
+          },
+        });
+      } catch (error) {
+        console.error('Booking error:', error);
+        alert(error.message || 'Booking failed');
+      } finally {
+        setIsBooking(false);
+      }
+    })();
   };
 
   const handleDateChange = (e) => {
     setSelectedSlot(null);
     setSelectedDate(new Date(e.target.value));
     setVenueDetails(null);
+    setVenueDetailsError(null);
+    setIsLoadingVenueDetails(false);
   };
 
   // Helper: check if there are slots available in venueDetails
@@ -68,13 +146,40 @@ const BookingPage = () => {
     return venueDetails.Venue.length > 0;
   };
 
-  if (!venueDetails && selectedDate) {
-    // Loading spinner
+  if (selectedDate && !access_token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="mt-4 text-gray-600">Please login to view available slots.</p>
+          <NavLink to="/login" className="mt-3 inline-block px-4 py-2 bg-blue-600 text-white rounded">Login</NavLink>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedDate && isLoadingVenueDetails) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading venue details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedDate && venueDetailsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="text-center max-w-md bg-white p-8 rounded-lg shadow-md">
+          <p className="text-red-600 font-semibold">{venueDetailsError}</p>
+          <p className="text-gray-600 mt-2">Please try again or select a different date.</p>
+          <button
+            onClick={() => setVenueDetailsError(null)}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

@@ -1,16 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const RelatedDoctors = () => {
   const navigate = useNavigate();
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const venues = [
+    {
+      name: 'City Futsal Arena',
+      sport_categories: JSON.stringify(['Futsal']),
+      photos: JSON.stringify([]),
+    },
+    {
+      name: 'Downtown Cricket Ground',
+      sport_categories: JSON.stringify(['Cricket']),
+      photos: JSON.stringify([]),
+    },
+    {
+      name: 'Sunset Basketball Court',
+      sport_categories: JSON.stringify(['Basketball']),
+      photos: JSON.stringify([]),
+    },
+    {
+      name: 'Riverside Tennis Club',
+      sport_categories: JSON.stringify(['Tennis']),
+      photos: JSON.stringify([]),
+    },
+  ];
 
   // Helper to get first category from JSON string
   const getFirstCategory = (catString) => {
     try {
-      const categories = JSON.parse(catString);
+      const categories = typeof catString === 'string' ? JSON.parse(catString) : catString;
       if (Array.isArray(categories) && categories.length > 0) {
         return categories[0];
       }
@@ -20,34 +39,6 @@ const RelatedDoctors = () => {
     return "";
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/catrogry");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setVenues(data.Category || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-8">Loading venues...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-8 text-red-500">Error: {error}</div>;
-  }
-
   return (
     <div className="flex flex-col items-center gap-4 my-16 text-gray-900 px-4">
       <h1 className="text-3xl font-medium">Sports Venues</h1>
@@ -56,7 +47,7 @@ const RelatedDoctors = () => {
       </p>
 
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {venues.slice(0, 6).map((venue, index) => {
+        {venues.slice(0, 6).map((venue) => {
           let imageUrl =
             "https://via.placeholder.com/300x200?text=Sports+Venue";
           try {
@@ -72,7 +63,7 @@ const RelatedDoctors = () => {
 
           return (
             <div
-              key={index}
+              key={venue.name}
               onClick={() => {
                 navigate(`/category/${encodeURIComponent(firstCategory)}`);
                 window.scrollTo(0, 0);

@@ -3,11 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 
 // Main Layout & Pages
-import Contact from "./pages/Contact";
+// import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import fakeDashboard from "./pages/fakeDashboard";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import Layout from "./pages/Layout";
+import Venues from "./pages/Venues";
+import Bookings from "./pages/Bookings";
 
 // Auth Pages
 import LoginReg from "./pages/auth/LoginReg";
@@ -33,11 +35,24 @@ import OfflinePayment from "./pages/Homes/Venue/Payment/OfflinePayment";
 import OnlinePayment from "./pages/Homes/Venue/Payment/OnlinePayment";
 import { useGetLoggedUserQuery } from "./services/userAuthApi";
 import { setUserInfo } from "./features/userSlice";
+import { getToken } from "./services/LocalStorageService";
+import { setUserToken } from "./features/authSlice";
 
 function App() {
   const { access_token } = useSelector((state) => state.auth);
-  const { data, isSuccess } = useGetLoggedUserQuery(access_token);
   const dispatch = useDispatch();
+
+  // Initialize token from localStorage on app start
+  useEffect(() => {
+    const { access_token: stored } = getToken();
+    if (stored && !access_token) {
+      dispatch(setUserToken({ access_token: stored }));
+    }
+  }, [dispatch]);
+
+  const { data, isSuccess } = useGetLoggedUserQuery(access_token, {
+    skip: !access_token, // Skip the query if no token
+  });
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -67,8 +82,8 @@ function App() {
           {/* Admin Auth Routes */}
           <Route path="admin/login" element={<AdminLogin />} />
           <Route path="admin/register" element={<AdminRegistration />} />
-          <Route index element={<Home />} />
-          <Route path="contact" element={<Contact />} />
+          <Route index element={<Navigate to="/login" />} />
+          {/* <Route path="contact" element={<Contact />} /> */}
           <Route
             path="login"
             element={
@@ -84,16 +99,8 @@ function App() {
             path="dashboard"
             element={access_token ? <Dashboard /> : <Navigate to="/login" />}
           />
-          <Route
-            path="admin/register"
-            element={
-              !access_token ? (
-                <AdminRegistration />
-              ) : (
-                <Navigate to="/dashboard" />
-              )
-            }
-          />
+          <Route path="venues" element={<Venues />} />
+          <Route path="bookings" element={access_token ? <Bookings /> : <Navigate to="/login" />} />
           <Route path="category/:categoryName" element={<CategoryPage />} />
           <Route path="/book/:id" element={<BookingPage />} />
           <Route

@@ -7,7 +7,7 @@ const Footer = () => {
       <div>
         <hr />
         <p className="py-5 text-sm text-center">
-          Copyright 2025 @ GamePlanR - All Right Reserved.
+          Copyright 2025 @ postgresR - All Right Reserved.
         </p>
       </div>
     </div>

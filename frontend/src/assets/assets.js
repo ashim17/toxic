@@ -60,28 +60,20 @@ export const assets = {
 
 export const specialityData = [
     {
-        speciality: 'General physician',
-        image: General_physician
+        speciality: 'Futsal',
+        image: 'https://img.icons8.com/ios-filled/100/000000/football.png'
     },
     {
-        speciality: 'Gynecologist',
-        image: Gynecologist
+        speciality: 'Cricket',
+        image: 'https://img.icons8.com/color/96/000000/cricket.png'
     },
     {
-        speciality: 'Dermatologist',
-        image: Dermatologist
+        speciality: 'Basketball',
+        image: 'https://img.icons8.com/ios-filled/100/000000/basketball.png'
     },
     {
-        speciality: 'Pediatricians',
-        image: Pediatricians
-    },
-    {
-        speciality: 'Neurologist',
-        image: Neurologist
-    },
-    {
-        speciality: 'Gastroenterologist',
-        image: Gastroenterologist
+        speciality: 'Tennis',
+        image: 'https://img.icons8.com/color/96/000000/tennis.png'
     },
 ]
 

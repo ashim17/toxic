@@ -21,18 +21,19 @@ def get_venue_details_with_filters(venueid,date):
             av.facilities,
             av.sport_categories,
             av.photos,
-            vs.venue_name,
-            vs.venue_image,
-            vs.schedule_date,
-            vs.start_time,
-            vs.end_time,
-            vs.available,
-            vs.color
+            av.name AS venue_name,
+            COALESCE((av.photos->>0), '') AS venue_image,
+            ts.date AS schedule_date,
+            to_char(ts.start_time, 'HH24:MI') AS start_time,
+            to_char(ts.end_time, 'HH24:MI') AS end_time,
+            (ts.status = 'available') AS available,
+            ts.price AS slot_price,
+            ts.id AS slot_id
         FROM
-            venue_slots vs
+            api_timeslot ts
         JOIN api_venue av ON
-            vs.venue_name = av."name"
-        WHERE av.id = %s and vs.schedule_date = %s;
+            ts.venue_id = av.id
+        WHERE av.id = %s AND ts.date = %s;
     """
     result = list(execute_query_and_map_results(query, (venueid,date)))
     return result

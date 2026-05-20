@@ -29,22 +29,22 @@ const Navbar = () => {
 
       {/* Center Menu */}
       <div className="flex gap-6 items-center justify-center">
-        <Button
+        {/* <Button
           component={NavLink}
           to="/"
           style={{ textTransform: "none" }}
           sx={{ color: "#333" }}
         >
           Home
-        </Button>
-        <Button
+        </Button> */}
+        {/* <Button
           component={NavLink}
           to="/contact"
           style={{ textTransform: "none" }}
           sx={{ color: "#333" }}
         >
           Contact
-        </Button>
+        </Button> */}
         <Button
           component={NavLink}
           to="/login"

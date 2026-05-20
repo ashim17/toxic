@@ -10,9 +10,9 @@ def show_slots_list(data):
 
     # Database connection (adjust according to your settings)
     conn = psycopg2.connect(
-        dbname="Toxic",
+        dbname="postgres",
         user="postgres",
-        password="jayhind",
+        password="postgres",
         host="localhost",
         port="5432"
     )

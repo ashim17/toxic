@@ -50,9 +50,9 @@ def api_slot_availability(venue, start, end):
 
     try:
         conn = psycopg2.connect(
-            dbname="Toxic",
+            dbname="postgres",
             user="postgres",
-            password="jayhind",
+            password="postgres",
             host="localhost",
             port="5432"
         )

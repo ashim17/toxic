@@ -1,6 +1,6 @@
 {
-  "short_name": "GamePlanR",
-  "name": "GamePlanR - Sports Event Management",
+  "short_name": "postgresR",
+  "name": "postgresR - Sports Event Management",
   "icons": [
     {
       "src": "favicon.ico",

@@ -1,4 +1,5 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .api_sports_category import *
 from .api_venue_details import api_venues_data
@@ -33,6 +34,7 @@ def check_booking_slots(request, venue, start, end):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def fetch_filtered_venue_details(request,venueid,date):
     return Response(filter_venue_details(venueid,date))
     
